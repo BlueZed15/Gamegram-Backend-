@@ -109,13 +109,13 @@ def get_sandboxes_feed(db: session_int):
 
 
 @router.get("/{sandbox_id}", response_model=SandboxResponse)
-def get_sandbox(sandbox_id: UUID, db: session_int, request: Request):
+def get_sandbox(sandbox_id: UUID, db: session_int,current_user: current_user_dep,request: Request):
     sandbox = get_sandbox_by_id(db=db, sandbox_id=sandbox_id)
     if not sandbox:
         raise HTTPException(status_code=404, detail="Sandbox not found")
     
     # Construct runnable URL pointing to your FastAPI proxy
-    runnable_url = str(request.base_url) + f"sandboxes/{sandbox_id}/files/index.html?mode=edit"
+    runnable_url = str(request.base_url) + f"sandboxes/{sandbox_id}/files/index.html?mode=edit&sandbox_id={sandbox_id}&creator_id={current_user.id}"
     
     return {
         "id": sandbox.id,
@@ -127,11 +127,11 @@ def get_sandbox(sandbox_id: UUID, db: session_int, request: Request):
 
 # ── POST: save .json + create game ───────────────────────────────
 
-@router.post("/{sandbox_id}/create", response_model=GameResponse, status_code=201)
+@router.post("/create", response_model=GameResponse, status_code=201)
 def create_game_from_sandbox(
-    sandbox_id: UUID,
     db: session_int,
-    current_user: current_user_dep,
+    sandbox_id: Annotated[str,Form()],
+    current_user: Annotated[str,Form()],
     title: Annotated[str, Form()] = "Untitled",
     level_file: UploadFile = File(...)
 ):
@@ -147,7 +147,7 @@ def create_game_from_sandbox(
         game = save_game_from_sandbox(
             db=db,
             supabase=supabase,
-            creator_id=current_user.id,
+            creator_id=current_user,
             sandbox_id=sandbox_id,
             json_bytes=level_file.file.read(),
             title=title,
