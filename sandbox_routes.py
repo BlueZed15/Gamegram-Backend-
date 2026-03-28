@@ -16,7 +16,8 @@ from fastapi.responses import Response
 
 router = APIRouter(prefix="/sandboxes", tags=["Sandboxes"])
 
-SUPABASE_STORAGE_URL = "https://npmrrkwizgrjiodijvje.supabase.co/storage/v1/object/public/sandboxes/"
+#SUPABASE_STORAGE_URL = "https://npmrrkwizgrjiodijvje.supabase.co/storage/v1/object/public/sandboxes/"
+SUPABASE_STORAGE_URL= "sandboxes"
 
 HEADERS_MAP = {
     ".data.br":         ("application/octet-stream", "br"),
@@ -38,11 +39,11 @@ async def serve_sandbox_file(sandbox_id: UUID, file_path: str, db: session_int):
     base_url = sandbox.sandbox_url.rsplit("/", 1)[0]
 
     # Fetch the requested file from Supabase
-    async with httpx.AsyncClient() as client:
-        r = await client.get(f"{base_url}/{file_path}")
-
-    if r.status_code != 200:
-        raise HTTPException(status_code=404, detail="File not found")
+    #async with httpx.AsyncClient() as client:
+    #    r = await client.get(f"{base_url}/{file_path}")
+    
+    #if r.status_code != 200:
+    #    raise HTTPException(status_code=404, detail="File not found")
 
     # Correct headers
     HEADERS_MAP = {
@@ -69,7 +70,7 @@ async def serve_sandbox_file(sandbox_id: UUID, file_path: str, db: session_int):
         headers["Content-Encoding"] = encoding
 
     return Response(
-        content=r.content,
+        content=open(SUPABASE_STORAGE_URL,"rb").read(),
         media_type=content_type,
         headers=headers
     )
@@ -104,35 +105,17 @@ def get_sandboxes_feed(db: session_int):
     sandboxes = get_all_sandboxes(db=db)
     return sandboxes
 
-#---------------------
-@router.get("/sandbox1", response_model=SandboxResponse)
-def get_sandbox1(db: session_int,request: Request,sandbox_id= "b3fab486-79fc-46ac-9abc-12c142a82c28"):
-    sandbox = get_sandbox_by_id(db=db, sandbox_id=sandbox_id)
-    if not sandbox:
-        raise HTTPException(status_code=404, detail="Sandbox not found")
-    
-    # Construct runnable URL pointing to your FastAPI proxy
-    runnable_url = str(request.base_url) + f"sandboxes/{sandbox_id}/files/index.html?mode=edit&sandbox_id={sandbox_id}"
-    
-    return {
-        "id": sandbox.id,
-        "name": sandbox.name,
-        "sandbox_url": sandbox.sandbox_url,
-        "runnable_url": runnable_url        # constructed, not from DB
-    }
-#-----------------
-
 # ── GET: specific sandbox by id ───────────────────────────────────
 
 
 @router.get("/select/{sandbox_id}", response_model=SandboxResponse)
-def get_sandbox(sandbox_id: UUID, db: session_int,current_user: current_user_dep,request: Request):
+def get_sandbox(sandbox_id: UUID, db: session_int,request: Request,current_user="a1b2c3d4-0000-0000-0000-000000000001"):
     sandbox = get_sandbox_by_id(db=db, sandbox_id=sandbox_id)
     if not sandbox:
         raise HTTPException(status_code=404, detail="Sandbox not found")
     
     # Construct runnable URL pointing to your FastAPI proxy
-    runnable_url = str(request.base_url) + f"sandboxes/{sandbox_id}/files/index.html?mode=edit&sandbox_id={sandbox_id}&creator_id={current_user.id}"
+    runnable_url = str(request.base_url) + f"sandboxes_data/{sandbox.name}/index.html?mode=edit&sandbox_id={sandbox_id}&creator_id={current_user}"
     
     return {
         "id": sandbox.id,

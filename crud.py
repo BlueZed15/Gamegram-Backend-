@@ -224,6 +224,7 @@ def save_game_from_sandbox(
     )
     db.add(game)
     db.flush()
+    db.commit()
     db.refresh(game)
     return game
 

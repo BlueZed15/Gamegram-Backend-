@@ -1,5 +1,8 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from uuid import UUID
+#import requests
+import httpx
 from tables import Game
 from core import session_int
 
@@ -14,7 +17,9 @@ def get_level(game_id: UUID, db: session_int = None):
         return None
     
     level_url=game.level_url
+    data=httpx.get(level_url).json()
     if not level_url:
         raise HTTPException(status_code=404, detail="Game not found")
-    return {"level_url": level_url}
+
+    return data
  
