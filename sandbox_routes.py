@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from schemas import SandboxResponse, GameResponse, UserSummary
 from crud import get_all_sandboxes, get_sandbox_by_id, save_game_from_sandbox
 from tables import Like, Comment
-from core import session_int,supabase,current_user_dep
+from core import session_int,supabase
 
 import httpx
 from fastapi.responses import Response
