@@ -16,7 +16,7 @@ class LoginRequest(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
-    refresh_token: str
+    #refresh_token: str
     token_type: str = "bearer"
 
 class RefreshRequest(BaseModel):
@@ -38,7 +38,7 @@ class UserResponse(BaseModel):
     username: str
     avatar_url: str | None
     bio: str | None
-    created_at: datetime
+    created_at: datetime | None
 
     model_config = {"from_attributes": True}
 
@@ -73,8 +73,8 @@ class SandboxResponse(BaseModel):
     id: UUID
     name: str
     sandbox_url: str
-    runnable_url: str | None = None   # not in DB, constructed on the fly
-
+    runnable_url: str | None = None   
+    
     class Config:
         from_attributes = True
 
