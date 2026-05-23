@@ -16,7 +16,7 @@ load_dotenv()
 
 app = FastAPI()
 app.mount("/sandboxes_data",StaticFiles(directory="sandboxes_data"), name="sandboxes")
-print('hey')
+
 app.include_router(sandbox_router)
 app.include_router(bootstrap_router)
 app.include_router(game_router)

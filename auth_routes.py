@@ -1,4 +1,3 @@
-import json
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer,OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
@@ -38,7 +37,7 @@ def pass_verify(password:str,input_hash: str):
 
 
 
-def create_access_token(data: dict,valid_time: timedelta = timedelta(days=1)):
+def create_access_token(data: dict,valid_time: timedelta = timedelta(minutes=15)):
     exp_time=datetime.now(timezone.utc)+valid_time
 
     #to_encode=data.copy()
@@ -122,7 +121,7 @@ def login_for_access_token(user_auth_info: Annotated[OAuth2PasswordRequestForm,D
     if valid_user:
         access_token=create_access_token(
             data={"sub":str(valid_user.id),"user":valid_user.username},
-            valid_time=timedelta(minutes=5)
+            valid_time=timedelta(minutes=20)
         )
     
 
