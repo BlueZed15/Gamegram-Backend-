@@ -10,7 +10,7 @@ from core import session_int
 router = APIRouter(prefix="/bootstrap", tags=["Bootstrap"])
 
 
-@router.get("/{game_id}")
+@router.get("/getjson")
 def get_level(game_id: UUID, db: session_int = None):
     game = db.query(Game).filter(Game.id == game_id).first()
     if not game:
