@@ -25,6 +25,7 @@
       </div>
     </div>
     <script>
+    
       var canvas = document.querySelector("#unity-canvas");
 
       // Shows a temporary message banner/ribbon for a few seconds, or
@@ -162,7 +163,23 @@
             };
 
       document.body.appendChild(script);
+    // 1. Get the query string from the current URL
+    const urlParams = new URLSearchParams(window.location.search);
 
+    // 2. Save the parameters to variables
+    const mode = urlParams.get('mode');             // e.g., "noedit"
+    const gameId = urlParams.get('game_id');         // e.g., "1234"
+    const sandboxId = urlParams.get('sandbox_id');  // e.g., "abc"
+    const creatorId = urlParams.get('creator_id');  // e.g., "xyz"
+
+    // Optional: Log them to the browser console to verify
+    console.log("Mode:", mode);
+    console.log("Game ID:", gameId);
+    console.log("Sandbox ID:", sandboxId);
+    console.log("Creator ID:", creatorId);
+
+    // --- The rest of your existing Unity WebGL code goes here ---
+    // var createUnityInstance = ... 
     </script>
   </body>
 </html>
