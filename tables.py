@@ -21,7 +21,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=True)
     avatar_url    = Column(Text, nullable=True)
     bio           = Column(Text, nullable=True)
-    created_at    = Column(DateTime, default=datetime.utcnow)
+    created_at    = Column(DateTime, default=datetime.now)
 
     games     = relationship("Game", back_populates="creator", cascade="all, delete")
     likes     = relationship("Like", back_populates="user", cascade="all, delete")

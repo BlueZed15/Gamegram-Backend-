@@ -15,7 +15,7 @@ from users_routes import router as user_router
 load_dotenv()
 
 app = FastAPI()
-app.mount("/sandboxes_data",StaticFiles(directory="sandboxes_data"), name="sandboxes")
+#app.mount("/sandboxes_data",StaticFiles(directory="sandboxes_data"), name="sandboxes")
 
 app.include_router(sandbox_router)
 app.include_router(bootstrap_router)
