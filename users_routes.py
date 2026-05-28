@@ -1,12 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from uuid import UUID
+from typing import Annotated
 
-from core import session_int, current_user_dep
-from crud import get_user_profile, get_user_games
-from crud import get_game_by_id
+from core import session_int
+from crud import get_user_games
 from tables import Like, Comment
-from schemas import SandboxResponse, UserSummary
+from auth_routes import get_current_user
+from schemas import UserResponse
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -31,19 +32,11 @@ def build_game_dict(game, db: Session) -> dict:
     }
 
 
-@router.get("/{user_id}")
-def get_profile(user_id: UUID, db: session_int):
-    profile = get_user_profile(db=db, user_id=user_id)
-    if not profile:
-        raise HTTPException(status_code=404, detail="User not found")
-    return profile
-
-
 # ── GET: games created by user ────────────────────────────────────
 
 @router.get("/{user_id}/games")
-def get_games(user_id: UUID, db: session_int):
-    games = get_user_games(db=db, user_id=user_id)
+def get_games(user_id: UUID, db: session_int, current_user= Annotated[UserResponse, Depends(get_current_user)]):
+    games = get_user_games(db=db, user_id=current_user.id)
     return {
         "games": [build_game_dict(g, db) for g in games],
         "total": len(games),

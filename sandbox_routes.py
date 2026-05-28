@@ -5,19 +5,21 @@ from typing import Annotated
 from uuid import UUID
 from fastapi.responses import JSONResponse
 
-from schemas import SandboxResponse, GameResponse, UserSummary
+from schemas import SandboxResponse, GameResponse, UserSummary, UserResponse
 from crud import get_all_sandboxes, get_sandbox_by_id, save_game_from_sandbox
 from tables import Like, Comment
 from core import session_int,supabase
+from auth_routes import get_current_user
 
 import httpx
+import json
 from fastapi.responses import Response
 
 
 router = APIRouter(prefix="/sandboxes", tags=["Sandboxes"])
 
-#SUPABASE_STORAGE_URL = "https://npmrrkwizgrjiodijvje.supabase.co/storage/v1/object/public/sandboxes/"
-SUPABASE_STORAGE_URL= "sandboxes"
+SUPABASE_STORAGE_URL = "https://npmrrkwizgrjiodijvje.supabase.co/storage/v1/object/public/sandboxes/"
+#SUPABASE_STORAGE_URL= "sandboxes"
 
 HEADERS_MAP = {
     ".data.br":         ("application/octet-stream", "br"),
@@ -39,11 +41,11 @@ async def serve_sandbox_file(sandbox_id: UUID, file_path: str, db: session_int):
     base_url = sandbox.sandbox_url.rsplit("/", 1)[0]
 
     # Fetch the requested file from Supabase
-    #async with httpx.AsyncClient() as client:
-    #    r = await client.get(f"{base_url}/{file_path}")
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{base_url}/{file_path}")
     
-    #if r.status_code != 200:
-    #    raise HTTPException(status_code=404, detail="File not found")
+    if r.status_code != 200:
+        raise HTTPException(status_code=404, detail="File not found")
 
     # Correct headers
     HEADERS_MAP = {
@@ -70,7 +72,7 @@ async def serve_sandbox_file(sandbox_id: UUID, file_path: str, db: session_int):
         headers["Content-Encoding"] = encoding
 
     return Response(
-        content=open(SUPABASE_STORAGE_URL,"rb").read(),
+        content=r.content,
         media_type=content_type,
         headers=headers
     )
@@ -109,13 +111,15 @@ def get_sandboxes_feed(db: session_int):
 
 
 @router.get("/select/{sandbox_id}", response_model=SandboxResponse)
-def get_sandbox(sandbox_id: UUID, db: session_int,request: Request,current_user="a1b2c3d4-0000-0000-0000-000000000001"):
+def get_sandbox(sandbox_id: UUID, db: session_int,request: Request,current_user: Annotated[UserResponse, Depends(get_current_user)],
+                current_user_test="a1b2c3d4-0000-0000-0000-000000000001"):
     sandbox = get_sandbox_by_id(db=db, sandbox_id=sandbox_id)
     if not sandbox:
         raise HTTPException(status_code=404, detail="Sandbox not found")
     
     # Construct runnable URL pointing to your FastAPI proxy
-    runnable_url = str(request.base_url) + f"sandboxes_data/{sandbox.name}/index.html?mode=edit&sandbox_id={sandbox_id}&creator_id={current_user}"
+    #runnable_url = str(request.base_url) + f"sandboxes_data/{sandbox.name}/index.html?mode=edit&sandbox_id={sandbox_id}&creator_id={current_user.id}"
+    runnable_url = str(request.base_url) + f"sandboxes/{sandbox_id}/files/index.html?mode=edit&sandbox_id={sandbox_id}&creator_id={current_user.id}"
     
     return {
         "id": sandbox.id,
@@ -131,28 +135,29 @@ def get_sandbox(sandbox_id: UUID, db: session_int,request: Request,current_user=
 def create_game_from_sandbox(
     db: session_int,
     sandbox_id: Annotated[str,Form()],
-    current_user: Annotated[str,Form()],
-    title: Annotated[str, Form()] = "Untitled",
-    level_file: UploadFile = File(...)
+    creator_id: Annotated[str,Form()],
+    level_file: Annotated[str, Form()],
+    title: Annotated[str, Form()] = "Untitled"
 ):
     # Validate sandbox exists
+    #print(level_file)
     if not get_sandbox_by_id(db=db, sandbox_id=sandbox_id):
         raise HTTPException(status_code=404, detail="Sandbox not found")
 
-    # Validate file type
-    if not level_file.filename.endswith(".json"):
-        raise HTTPException(status_code=400, detail="Only .json files allowed")
 
     try:
         game = save_game_from_sandbox(
             db=db,
             supabase=supabase,
-            creator_id=current_user,
+            creator_id=creator_id,
             sandbox_id=sandbox_id,
-            json_bytes=level_file.file.read(),
+            json_bytes=level_file.encode("utf-8"),
             title=title,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save game: {str(e)}")
 
-    return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "yay"})
+    return JSONResponse(
+        status_code=status.HTTP_200_OK, 
+        content={"message": "Successfully saved game file"}
+    )
