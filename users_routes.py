@@ -35,7 +35,7 @@ def build_game_dict(game, db: Session) -> dict:
 # ── GET: games created by user ────────────────────────────────────
 
 @router.get("/{user_id}/games")
-def get_games(user_id: UUID, db: session_int, current_user= Annotated[UserResponse, Depends(get_current_user)]):
+def get_games(db: session_int, current_user: Annotated[UserResponse, Depends(get_current_user)]):
     games = get_user_games(db=db, user_id=current_user.id)
     return {
         "games": [build_game_dict(g, db) for g in games],
